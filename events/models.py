@@ -1,9 +1,9 @@
+import datetime
 from core.config_peewee import db
 from authentication.models import User
 from customers.models import Customer, Contract
-from peewee import Model, AutoField, DateTimeField, ForeignKeyField
-from peewee import BooleanField, CharField, TextField, IntegerField, FloatField
-import datetime
+from peewee import Model, ForeignKeyField
+from peewee import AutoField, DateTimeField, BooleanField, CharField, TextField, IntegerField, FloatField
 
 
 class Event(Model):

@@ -2,7 +2,7 @@ import pytest
 from peewee import SqliteDatabase
 from passlib.hash import argon2
 import datetime
-from authentication.models import Role, User
+from authentication.models import User
 from customers.models import Customer, Contract
 from events.models import Event
 
@@ -11,23 +11,21 @@ db = SqliteDatabase(':memory:')
 
 @pytest.fixture
 def bdd():
-    db.bind([Role, User, Customer, Contract, Event])
+    db.bind([User, Customer, Contract, Event])
     db.connect()
-    db.create_tables([Role, User, Customer, Contract, Event])
+    db.create_tables([User, Customer, Contract, Event])
 
     yield
-    db.drop_tables([Role, User, Customer, Contract, Event])
+    db.drop_tables([User, Customer, Contract, Event])
     db.close()
 
 
 @pytest.fixture
 def user_testing(bdd):
-    role = Role.create(role="support")
     password = argon2.hash("password")
-    user = User.create(name="Gunther", email="gunther@email.com", password=password, role=role)
+    user = User.create(name="Gunther", email="gunther@email.com", password=password, role="support")
 
     yield user
-    role.delete_instance()
     user.delete_instance()
 
 
