@@ -1,7 +1,11 @@
 from core.config_peewee import db
-from authentication.models import User, Role
+from core.config_sentry import conf_sentry
+from core.config_keys import encryption_key
+from authentication.models import User, Salt
 from customers.models import Customer, Contract
 from events.models import Event
+
+from authentication.views import create_user
 
 
 class CreateTable:
@@ -25,4 +29,11 @@ class CreateTable:
 
 
 if __name__ == "__main__":
-    CreateTable(Event)
+    create_user()
+
+    # conf_sentry()
+    # CreateTable(User)
+    """
+    key = encryption_key()
+    print(key)
+    """
