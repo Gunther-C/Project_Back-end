@@ -1,41 +1,41 @@
 import click
-from core.config_peewee import db
 from .controllers import Controllers
-import peewee
+
 
 
 @click.command()
-@click.option('--name', prompt="Name", help="Nom de l'utilisateur")
-@click.option('--email', prompt="Email", help="Email de l'utilisateur")
-@click.option('--password', prompt="Password", help="Mot de passe de l'utilisateur")
-@click.option('--confirm-password', prompt="confirme password", help="Confirmez le mot de passe")
-@click.option('--role', type=click.Choice(['commercial', 'gestion', 'support']), prompt="Rôle",
-              help="Rôle de l'utilisateur")
+@click.option('--name', prompt="Name", required=True)
+@click.option('--email', prompt="Email", required=True)
+@click.option('--password', prompt="Password", required=True)
+@click.option('--confirm-password', prompt="confirme password", required=True)
+@click.option('--role', type=click.Choice(['commercial', 'gestion', 'support']), prompt="Rôle", required=True)
 def create_user(name, email, password, confirm_password, role):
     try:
-        user = Controllers().create(name=name, email=email, password=password, confirm_password=confirm_password,
-                                  role=role)
-        click.echo(f"Utilisateur {user.name} créé avec succès !")
-        click.echo(f"Son rôle {user.role} créé avec succès !")
+        user = Controllers().create(name, email, password, confirm_password, role)
+        click.echo(f"Utilisateur {user.name} créé avec succès, Son rôle {user.role} !")
     except ValueError as e:
         click.echo(f"Erreur : {e}")
 
 @click.command()
-@click.option('--email', prompt="Email", help="Email de l'utilisateur")
-@click.option('--password', prompt="Password", help="Mot de passe de l'utilisateur")
+@click.option('--email', prompt="Email", required=True)
+@click.option('--password', prompt="Password", required=True)
 def login_user(email, password):
-    try:
-        user = User.get(User.email == email)
-        if Controllers().verify_password(user, password):
-            """
-            Création du token
-            """
-            click.echo(f"Connexion réussie!")
-
-        else:
-            click.echo("Mot de passe incorrect.")
-    except peewee.DoesNotExist:
-        click.echo("Utilisateur non trouvé.")
-    except Exception as e:
-        click.echo(f"Erreur lors de la connexion : {e}")
-
+    if Controllers().login(email, password):
+        """
+        Redirection
+        OU ET,
+        Accès table avec bouton pour voir clients, contrats, événements (lecture seule).
+        De plus selon le rôle:
+            Commercial => 
+            - Création ou modification d'un compte client lui appartenant
+            - Ses contrats et événements liés, 
+            - Si le contrat est signé, création de l'événement (hors support)
+            
+            Gestion => 
+            - Création et signature d'un contrat et association de ce contrat au client
+            - Désigne un support une fois un événement créé
+            
+            Support =>
+            - Ses événements
+            - Modification / Mise à jour de ses événements
+        """

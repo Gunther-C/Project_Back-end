@@ -1,5 +1,5 @@
 from .config_peewee import db
-from authentication.models import User, Salt
+from authentication.models import User
 from customers.models import Customer, Contract
 from events.models import Event
 
