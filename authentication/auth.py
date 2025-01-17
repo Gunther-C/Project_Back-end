@@ -30,13 +30,9 @@ class AuthManager:
 
 
     def token_create(self):
-        """
-        Creation of the JWT
-        :return: Token
-        """
         payload = {"user_id": self.user.id}
-        token = jwt.encode(payload, self.SECRET_KEY, algorithm="HS256")
-        CACHE_KEY.set("jwt_token", token)
+        token = jwt.encode(payload, self.key, algorithm="HS256")
+        self.cache.set("jwt_token", token)
 
     def token_delete(self):
-        cache.delete("jwt_token")
+        self.cache.delete("jwt_token")
