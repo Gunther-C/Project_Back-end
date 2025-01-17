@@ -1,52 +1,54 @@
 import os
 import validators
 from core.config_peewee import db
-from authentication.models import User, Salt
+from authentication.models import User
+from peewee import IntegrityError
 from passlib.hash import argon2
 from dotenv import load_dotenv
 from cryptography.fernet import Fernet
 
 
-load_dotenv()
+class Controllers():
+    def __init__(self):
+        load_dotenv()
+        self.password_key = Fernet(os.getenv('PASSWORD_KEY').encode())
+        self.user = None
 
-key_password = os.getenv('PASSWORD_KEY').encode()
-fernet_password = Fernet(key_password)
+    def create(self, **kwargs):
+        for key in kwargs:
+            if not kwargs[key]:
+                raise ValueError("Vous devez remplir tous les champs")
 
-key_email = os.getenv('EMAIL_KEY').encode()
-fernet_email = Fernet(key_email)
+        name = kwargs["name"]
+        email = kwargs["email"]
+        password = kwargs["password"]
+        confirm_password = kwargs["confirm_password"]
+        role = kwargs["role"]
 
-key_role = os.getenv('ROLE_KEY').encode()
-fernet_role = Fernet(key_role)
+        if password != confirm_password:
+            raise ValueError("Les mots de passe ne correspondent pas")
+        if not validators.email(email):
+            raise ValueError("Email invalide")
 
+        salt = os.urandom(16).hex()
+        password_hash = argon2.hash(password.encode() + salt.encode())
+        encrypted_password = self.password_key.encrypt(password_hash.encode())
 
-def control_user(name, email, password, confirm_password, role):
-    if password != confirm_password:
-        raise ValueError("Les mots de passe ne correspondent pas")
-
-    if not validators.email(email):
-        raise ValueError("Email invalid")
-
-    encrypted_email = fernet_email.encrypt(email.encode()).decode()
-    encrypted_role = fernet_role.encrypt(role.encode()).decode()
-
-    new_salt = os.urandom(16).hex()
-    salt = Salt.create(salt=new_salt)
-    encrypted_password = argon2.hash(key_password + password.encode() + salt.salt.encode())
-
-    with db.atomic():
-        user = User.create(name=name, email=encrypted_email, password=encrypted_password,
-                           role=encrypted_role, salt=salt)
-        user.save()
-    return user
-
-
-def verify_password(user, verif_password):
-    return argon2.verify(key_password + verif_password.encode() + user.salt.salt.encode(), user.password)
+        try:
+            with db.atomic():
+                self.user = User.create(name=name, email=email, password=encrypted_password, role=role, salt=salt)
+                self.user.save()
+        except IntegrityError as e:
+            raise ValueError(f"Erreur d'intégrité des données : {e}")
+        return  self.user
 
 
-def decrypt_email(user):
-    return fernet_email.decrypt(user.email.encode()).decode()
+    def verify_password(self, user, verif_password):
+        password = self.password_key.decrypt(user.password.encode())
+        ctrl_password = (verif_password + user.salt).encode()
+        return argon2.verify(ctrl_password, password)
 
-
-def decrypt_role(user):
-    return fernet_role.decrypt(user.role.encode()).decode()
+    """
+    Update
+    Delete
+    """
