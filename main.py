@@ -8,6 +8,7 @@ from customers.models import Customer, Contract
 from events.models import Event
 
 from authentication.views import create_user, login_user
+from authentication.auth import AuthManager
 
 
 
@@ -18,6 +19,9 @@ if __name__ == "__main__":
     login_user()
 
     # conf_sentry()
+
+    # AuthManager().token_delete()
+    # AuthManager().token_get()
 
     # CreateTable(User)
     # ViewTable(User)

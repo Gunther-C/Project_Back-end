@@ -1,6 +1,8 @@
 import click
 from .controllers import Controllers
+from .permissions import Permissions
 
+permissions = Permissions()
 
 @click.command()
 @click.option('--name', prompt="Name", type=str, required=True)
@@ -18,7 +20,7 @@ def create_user(name, email, password, confirm_password, role):
 
 
 
-""" ICI OU DANS CTRL UN default=user.name ect """
+""" default=user.name ect """
 @click.command()
 @click.option('--name', prompt="Name")
 @click.option('--email', prompt="Email", required=True)
@@ -31,15 +33,20 @@ def update_user(name, email, password, confirm_password, role):
 
 
 @click.command()
-@click.option('--email', prompt="Email", type=str, required=True)
-@click.option('--password', prompt="Password", type=str, required=True)
-def login_user(email, password):
+def login_user():
+    if permissions.is_authenticated():
+        click.echo("Vous êtes déjà connecté.")
+        return
+
+    email = click.prompt("Email", type=str)
+    password = click.prompt("Password", type=str)
+
+    if not email or not password:
+        click.echo("Tous les champs sont obligatoires.")
+        return
 
     if Controllers().login(email, password):
         """
-        AJOUTER UNE PERMISSION OU AUTRE POUR AUTORISER LOGIN_USER OU PAS
-        
-        
         Accès pour voir clients, contrats, événements (lecture seule).
         De plus selon le rôle:
             Commercial => 

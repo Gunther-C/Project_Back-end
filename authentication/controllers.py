@@ -4,6 +4,7 @@ import validators
 from core.config_peewee import db
 from .models import User
 from .auth import AuthManager
+from .permissions import Permissions
 
 import peewee
 from peewee import IntegrityError
@@ -15,26 +16,21 @@ from cryptography.fernet import Fernet
 
 class Controllers():
     PASSWORD_KEY = Fernet(os.getenv('PASSWORD_KEY').encode())
+
     def __init__(self):
         load_dotenv()
         self.user = None
-        self.token = AuthManager().token_cache()
+        self.permission = Permissions()
 
-        if self.token is not None:
-            self.user = User.get_or_none(User.id == self.token["user_id"])
+        if self.permission.is_authenticated() is not None:
+            self.user = self.permission.user
 
-
-
-    def login(self, email, password)-> False:
-        if self.token:
-            click.echo("Vous êtes déjà connecté.")
-            return False
+    def login(self, email, password) -> False:
         try:
             user = User.get(User.email == email)
             if self.verify_password(user, password):
 
                 AuthManager().token_create(user)
-                self.token = AuthManager().token_cache()
 
                 click.echo(f"Connexion réussie!")
                 return True
@@ -55,6 +51,7 @@ class Controllers():
     Update
     Delete
     """
+
     @classmethod
     def create(cls, name, email, password, confirm_password, role):
 
@@ -77,4 +74,4 @@ class Controllers():
                 user.save()
         except IntegrityError as e:
             raise ValueError(f"Erreur d'intégrité des données : {e}")
-        return  user
+        return user
