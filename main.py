@@ -24,15 +24,3 @@ if __name__ == "__main__":
 
     # jwt_key()
     # encryption_key('PASSWORD_KEY')
-
-    """
-    Créer un user (admin) qui puisse avoir access a la bdd
-    
-    Comment modifier la couleur (entre autre des messages d'alerte)
-     
-    Mettre rich en place pour les tables
-    
-    Mettre en place les permissions (dans le token ?)
-    
-    Ajouter des cryptages au controller du customer (déplacer du model au controller)
-    """

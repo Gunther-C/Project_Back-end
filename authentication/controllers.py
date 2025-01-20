@@ -2,8 +2,8 @@ import os
 import click
 import validators
 from core.config_peewee import db
-from .auth import AuthManager
 from .models import User
+from .auth import AuthManager
 
 import peewee
 from peewee import IntegrityError
@@ -17,15 +17,18 @@ class Controllers():
     PASSWORD_KEY = Fernet(os.getenv('PASSWORD_KEY').encode())
     def __init__(self):
         load_dotenv()
-        self.token = AuthManager().token_cache()
         self.user = None
+        self.token = AuthManager().token_cache()
 
+        if self.token is not None:
+            self.user = User.get_or_none(User.id == self.token["user_id"])
+
+
+
+    def login(self, email, password)-> False:
         if self.token:
-            self.user = User.get(User.id == self.token["user_id"])
-
-
-    """ce servir de login que si pas de token ??"""
-    def login(self, email, password):
+            click.echo("Vous êtes déjà connecté.")
+            return False
         try:
             user = User.get(User.email == email)
             if self.verify_password(user, password):
@@ -41,6 +44,7 @@ class Controllers():
             click.echo("Utilisateur non trouvé.")
         except Exception as e:
             click.echo(f"Erreur lors de la connexion : {e}")
+        return False
 
     def verify_password(self, user, verif_password):
         password = self.PASSWORD_KEY.decrypt(user.password.encode())
