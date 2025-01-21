@@ -7,7 +7,7 @@ from authentication.models import User
 from customers.models import Customer, Contract
 from events.models import Event
 
-from authentication.views import create_user, login_user
+from authentication.views import create_user, login_user, update_user
 from authentication.auth import AuthManager
 
 
@@ -16,7 +16,8 @@ from authentication.auth import AuthManager
 
 if __name__ == "__main__":
     # create_user()
-    login_user()
+    # login_user()
+    update_user()
 
     # conf_sentry()
 

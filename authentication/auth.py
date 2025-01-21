@@ -22,11 +22,11 @@ class AuthManager:
         if user is not None:
             payload = {"user_id": str(user.id)}
             token = jwt.encode(payload, self.key, algorithm="HS256")
-            self.cache_dir.set("jwt_token", token)
+            return self.cache_dir.set("jwt_token", token)
+        return None
 
     def token_cache(self):
         cache_token = self.cache_dir.get("jwt_token")
-
         if cache_token is not None:
             try:
                 self.token = jwt.decode(cache_token, self.key, algorithms=["HS256"])

@@ -3,6 +3,8 @@ from .controllers import Controllers
 from .permissions import Permissions
 
 permissions = Permissions()
+is_authenticated = permissions.is_authenticated()
+
 
 @click.command()
 @click.option('--name', prompt="Name", type=str, required=True)
@@ -19,22 +21,32 @@ def create_user(name, email, password, confirm_password, role):
         click.echo(f"Erreur : {e}")
 
 
-
-""" default=user.name ect """
 @click.command()
-@click.option('--name', prompt="Name")
-@click.option('--email', prompt="Email", required=True)
-@click.option('--password', prompt="Password", required=True)
-@click.option('--confirm-password', prompt="Confirme password", required=True)
-@click.option('--role', type=click.Choice(['commercial', 'gestion', 'support']), prompt="Rôle", required=True)
-def update_user(name, email, password, confirm_password, role):
+def update_user():
+    if is_authenticated is None:
+        click.echo("Vous n'êtes pas autorisé!")
+        return
+
+    user = permissions.user
+
+    """
+        ATTENTION permissions.user VA ETRE DIFFERENT DE controller.user
+        DECONNEXION ET RECONNEXION NECESSAIRE OU AUTRE
+        AVANCER AVEC DEUX OBJECT USER IDENTIQUE PEUT SERVIR A UNE COMPARAISON MAIS PEUT AUSSI COMPLIQUE
+    """
+    name = click.prompt("Name", type=str, default=user.name)
+    email = click.prompt("Email", type=str, default=user.email)
+    password = click.prompt("Password", type=str, default='')
+    confirm_password = click.prompt("Confirm password", default='')
+    role = click.prompt("Role", type=click.Choice(['commercial', 'gestion', 'support']), default=user.role)
+
     if Controllers().update(name, email, password, confirm_password, role):
         click.echo(f"Modification(s) sauvegardée(s)!")
 
 
 @click.command()
 def login_user():
-    if permissions.is_authenticated():
+    if is_authenticated:
         click.echo("Vous êtes déjà connecté.")
         return
 
@@ -46,6 +58,7 @@ def login_user():
         return
 
     if Controllers().login(email, password):
+        click.echo(f"Connexion réussie!")
         """
         Accès pour voir clients, contrats, événements (lecture seule).
         De plus selon le rôle:

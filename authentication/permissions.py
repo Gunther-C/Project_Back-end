@@ -16,4 +16,6 @@ class Permissions:
         return self.user is not None
 
     def has_role(self, role):
-        return self.user and self.user.role == role
+        if self.is_authenticated():
+            return self.user.role == role
+        return False

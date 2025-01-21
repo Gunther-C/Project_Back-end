@@ -22,24 +22,24 @@ class Controllers():
         self.user = None
         self.permission = Permissions()
 
-        if self.permission.is_authenticated() is not None:
-            self.user = self.permission.user
-
-    def login(self, email, password) -> False:
-        try:
-            user = User.get(User.email == email)
-            if self.verify_password(user, password):
-
-                AuthManager().token_create(user)
-
-                click.echo(f"Connexion réussie!")
-                return True
-            else:
-                click.echo("Mot de passe incorrect.")
-        except peewee.DoesNotExist:
+    def login(self, email, password)-> False:
+        user = User.get_or_none(User.email == email)
+        if user is None:
             click.echo("Utilisateur non trouvé.")
-        except Exception as e:
-            click.echo(f"Erreur lors de la connexion : {e}")
+            return False
+
+        if self.verify_password(user, password):
+
+            AuthManager().token_create(user)
+
+            if self.permission.is_authenticated() is not None:
+                self.user = self.permission.user
+                return self.user
+
+            click.echo("Authentification à échouée.")
+            return False
+
+        click.echo("Mot de passe incorrect.")
         return False
 
     def verify_password(self, user, verif_password):
@@ -47,8 +47,47 @@ class Controllers():
         ctrl_password = (verif_password + user.salt).encode()
         return argon2.verify(ctrl_password, password)
 
+
+    def update(self, name, email, password, confirm_password, role):
+        if self.user is not None:
+            if password:
+                while password != confirm_password:
+                    click.echo("Les mots de passe ne correspondent pas.")
+                    password = click.prompt("Password")
+                    confirm_password = click.prompt("Confirmez le mot de passe")
+
+                salt = os.urandom(16).hex()
+                password_hash = argon2.hash(password.encode() + salt.encode())
+                password = cls.PASSWORD_KEY.encrypt(password_hash.encode())
+            else:
+                salt = self.user.salt
+                password = self.user.password
+
+            if email and not validators.email(email):
+                click.echo("Email invalide")
+                email = click.prompt("Email")
+
+            """
+                ATTENTION permissions.user VA ETRE DIFFERENT DE controller.user
+                DECONNEXION ET RECONNEXION NECESSAIRE OU AUTRE
+                AVANCER AVEC DEUX OBJECT USER IDENTIQUE PEUT SERVIR A UNE COMPARAISON MAIS PEUT AUSSI COMPLIQUE
+            """
+
+            try:
+                with db.atomic():
+                    self.user.name = name
+                    self.user.email = email
+                    self.user.password = password
+                    self.user.role = role
+                    self.user.salt = salt
+                    self.user.save()
+            except IntegrityError as e:
+                raise ValueError(f"Erreur d'intégrité des données : {e}")
+            return user
+
+
+
     """
-    Update
     Delete
     """
 
